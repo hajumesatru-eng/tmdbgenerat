@@ -1,605 +1,10 @@
 <!DOCTYPE html>
-<html lang="th" class="dark" id="html-root">
+<html lang="th" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="page-seo-title">TMDB Streaming Studio - Auto Multi-Language & URL Generator</title>
-    <meta name="description" id="page-seo-desc" content="Generate complete streaming web pages with TMDB auto-translation to Thai and Vietnamese, full season/episode URLs, and ad banners.">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #0f172a;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #334155;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #475569;
-        }
-        @media (max-width: 768px) {
-            .ad-footer-frame {
-                transform: scale(0.82);
-                transform-origin: center;
-            }
-        }
-    </style>
-</head>
-<body class="bg-slate-950 text-white min-h-screen selection:bg-red-600 selection:text-white pb-24">
-
-    <header class="sticky top-0 z-50 bg-slate-950/90 backdrop-blur-md border-b border-gray-800/80 px-4 py-3">
-        <div class="max-w-7xl mx-auto flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-red-600 to-rose-500 flex items-center justify-center shadow-lg shadow-red-900/30">
-                    <i class="fa-solid fa-play text-white text-sm"></i>
-                </div>
-                <div>
-                    <h1 class="font-black text-sm tracking-wide text-white uppercase" id="ui-brand-title">สตูดิโอสตรีมมิ่ง</h1>
-                    <p class="text-[10px] text-gray-400">TMDB Multi-Language Engine</p>
-                </div>
-            </div>
-
-            <div class="flex items-center space-x-2">
-                <select id="lang-select" onchange="changeLanguage()" class="bg-slate-900 border border-gray-800 text-xs text-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-red-600">
-                    <option value="th">🇹🇭 ไทย (Thai)</option>
-                    <option value="vi">🇻🇳 Tiếng Việt</option>
-                </select>
-
-                <button id="nav-gen-btn" onclick="switchView('generator')" class="text-xs sm:text-sm font-medium px-3 py-1.5 rounded-md bg-red-600 text-white transition" data-i18n="nav_generator">
-                    Generator
-                </button>
-                <button id="nav-prev-btn" onclick="switchView('preview')" class="text-xs sm:text-sm font-medium px-3 py-1.5 rounded-md text-gray-300 hover:text-white transition" data-i18n="nav_preview">
-                    Live Preview
-                </button>
-            </div>
-        </div>
-    </header>
-
-    <main id="view-generator" class="max-w-6xl mx-auto p-4 sm:p-6 space-y-6">
-        
-        <div class="bg-gradient-to-r from-slate-900 via-slate-900/90 to-black border border-gray-800/80 rounded-2xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
-            <div class="absolute -right-10 -bottom-10 w-60 h-60 bg-red-600/10 rounded-full blur-3xl pointer-events-none"></div>
-            <div class="max-w-2xl relative z-10 space-y-4">
-                <h2 class="text-2xl sm:text-3xl font-black text-white" id="gen-heading" data-i18n="gen_heading">TMDB Batch URL & Template Generator</h2>
-                <p class="text-xs sm:text-sm text-gray-400 leading-relaxed" id="gen-subheading" data-i18n="gen_subheading">ป้อน TMDB ID ซีรีส์เพื่อสร้างหน้าสตรีมมิ่งอัตโนมัติพร้อม URL ทุกซีซั่นและทุกตอน รวมถึงแปลภาษาอัตโนมัติ</p>
-                
-                <div class="flex flex-col sm:flex-row gap-2 pt-2">
-                    <div class="relative flex-1">
-                        <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-gray-500">
-                            <i class="fa-solid fa-film"></i>
-                        </span>
-                        <input type="text" id="tmdb-input" placeholder="e.g. 1396 (Breaking Bad) or URL" class="w-full bg-black/60 border border-gray-800 rounded-xl pl-10 pr-4 py-3 text-xs sm:text-sm text-white placeholder-gray-500 focus:outline-none focus:border-red-600 transition">
-                    </div>
-                    <button id="fetch-btn" onclick="fetchTMDBData()" class="bg-red-600 hover:bg-red-700 text-white font-bold px-6 py-3 rounded-xl text-xs sm:text-sm transition shadow-lg shadow-red-900/40 flex items-center justify-center shrink-0">
-                        <i class="fa-solid fa-bolt mr-2"></i> <span data-i18n="btn_generate_all">Generate All URLs</span>
-                    </button>
-                </div>
-
-                <div id="error-box" class="hidden text-xs text-red-400 bg-red-950/40 border border-red-900/60 p-2.5 rounded-lg"></div>
-
-                <div class="flex flex-wrap items-center gap-2 pt-2 text-xs text-gray-400">
-                    <span class="font-semibold text-gray-300">ตัวอย่าง:</span>
-                    <button onclick="loadSampleShow(1396)" class="bg-black/40 border border-gray-800 hover:border-gray-600 px-2.5 py-1 rounded-lg text-gray-300">Breaking Bad (1396)</button>
-                    <button onclick="loadSampleShow(66732)" class="bg-black/40 border border-gray-800 hover:border-gray-600 px-2.5 py-1 rounded-lg text-gray-300">Stranger Things (66732)</button>
-                    <button onclick="loadSampleShow(85552)" class="bg-black/40 border border-gray-800 hover:border-gray-600 px-2.5 py-1 rounded-lg text-gray-300">Squid Game (85552)</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="generator-placeholder" class="text-center py-20 bg-slate-900/40 border border-gray-800/80 rounded-2xl">
-            <div class="w-16 h-16 rounded-2xl bg-gray-900 flex items-center justify-center mx-auto mb-4 text-gray-600 text-2xl">
-                <i class="fa-solid fa-clapperboard"></i>
-            </div>
-            <h3 class="text-base font-bold text-gray-300" id="ph-title" data-i18n="ph_title">ยังไม่ได้โหลดข้อมูลซีรีส์</h3>
-            <p class="text-xs text-gray-500 mt-1" id="ph-sub" data-i18n="ph_sub">ป้อน TMDB ID หรือเลือกตัวอย่างเพื่อสร้างรายการ URL ทั้งหมด</p>
-        </div>
-
-        <div id="generator-results" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            <div class="bg-slate-900/50 border border-gray-800 rounded-2xl p-4 sm:p-6 space-y-4">
-                <img id="show-poster" src="" alt="Poster" class="w-full h-72 object-cover rounded-xl shadow-lg border border-gray-800" onerror="this.src='https://placehold.co/500x750/111827/ffffff?text=No+Image'">
-                <div>
-                    <h3 id="show-title" class="font-black text-lg text-white">Title</h3>
-                    <p id="show-meta" class="text-xs text-gray-400 mt-1">2023 • ⭐ 8.5</p>
-                    <span id="show-status" class="inline-block mt-2 px-2.5 py-1 bg-red-600/20 border border-red-600/40 text-red-400 text-[10px] font-bold rounded-lg uppercase">Ongoing</span>
-                </div>
-                <p id="show-synopsis" class="text-xs text-gray-300 leading-relaxed line-clamp-4">Synopsis...</p>
-                <button onclick="switchView('preview')" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-2.5 rounded-xl text-xs transition border border-gray-700" data-i18n="btn_preview_page">
-                    ดูตัวอย่างหน้าสตรีมมิ่งสด
-                </button>
-            </div>
-
-            <div class="lg:col-span-2 space-y-6">
-                
-                <div class="bg-slate-900/50 border border-gray-800 rounded-2xl p-4 sm:p-6 space-y-4">
-                    <div class="flex items-center justify-between">
-                        <h4 class="font-bold text-sm text-white" id="txt-season-list-title" data-i18n="txt_season_list_title">รายการ URL แต่ละซีซั่นและตอนทั้งหมด</h4>
-                        <button onclick="copyAllGeneratedUrls()" class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold shadow transition" data-i18n="btn_copy_all_urls">
-                            <i class="fa-regular fa-copy mr-1"></i> คัดลอก URL ทั้งหมด
-                        </button>
-                    </div>
-
-                    <div id="gen-season-tabs" class="flex flex-wrap gap-2"></div>
-
-                    <p class="text-xs text-gray-400 pt-2" id="txt-ep-desc" data-i18n="txt_ep_desc">คลิatตอนด้านล่างเพื่อสลับหน้า Preview ทันที:</p>
-                    
-                    <div id="episodes-container" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-72 overflow-y-auto pr-1"></div>
-
-                    <div class="p-3 bg-black/60 rounded-xl border border-gray-800 font-mono text-[11px] text-red-400 truncate" id="current-selected-url">
-                        URL: -
-                    </div>
-                </div>
-
-                <div class="bg-slate-900/50 border border-gray-800 rounded-2xl p-4 sm:p-6 space-y-4">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h4 class="font-bold text-sm text-white" id="export-title" data-i18n="export_title">ส่งออกโค้ด HTML (รวมโฆษณา)</h4>
-                            <p class="text-xs text-gray-400 mt-0.5" id="export-desc" data-i18n="export_desc">ดาวน์โหลดไฟล์ HTML พร้อมโครงสร้าง UI ตามลำดับที่กำหนด</p>
-                        </div>
-                        <button onclick="exportTemplateCode()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow transition shrink-0" data-i18n="btn_download_html">
-                            <i class="fa-solid fa-download mr-1.5"></i> ดาวน์โหลด HTML
-                        </button>
-                    </div>
-                    <textarea id="exported-code-preview" readonly class="w-full h-36 bg-black/80 border border-gray-800 rounded-xl p-3 font-mono text-[11px] text-gray-300 focus:outline-none"></textarea>
-                </div>
-
-            </div>
-
-        </div>
-
-    </main>
-
-    <!-- UI Order: Title -> Ads 300x250 -> Video Player -> CTA -> Poster+Synopsis -> Season -> All Episodes -> Actor -> Footer -->
-    <main id="view-preview" class="hidden max-w-4xl mx-auto p-4 sm:p-6 space-y-6">
-        
-        <button onclick="switchView('generator')" class="inline-flex items-center text-xs font-semibold text-gray-400 hover:text-white mb-2 bg-slate-900 border border-gray-800 px-3 py-1.5 rounded-lg transition">
-            <i class="fa-solid fa-arrow-left mr-2"></i> <span data-i18n="btn_back">กลับไปยัง Generator</span>
-        </button>
-
-        <!-- 1. TITLE -->
-        <div class="bg-slate-900/50 border border-gray-800 rounded-2xl p-5">
-            <h2 id="preview-show-title" class="text-2xl sm:text-3xl font-black text-white">Show Title</h2>
-            <p id="preview-meta" class="text-xs text-gray-400 mt-1">2023 • ⭐ 8.5</p>
-        </div>
-
-        <!-- 2. ADS BANNER (300x250) -->
-        <div class="my-4 flex flex-col items-center justify-center p-3 bg-slate-900/50 border border-gray-800 rounded-2xl">
-            <span class="text-[10px] text-gray-500 uppercase tracking-wider mb-2" data-i18n="ad_label">Sponsored Advertisement (300x250)</span>
-            <div class="w-[300px] h-[250px] bg-slate-900 flex items-center justify-center rounded-lg overflow-hidden border border-gray-800">
-                <script>var atOptions_1 = {'key':'53541ca00eed825e8c431c12f7418ac0','format':'iframe','height':250,'width':300,'params':{}};</script>
-                <script src="https://buffcasualwhine.com/53541ca00eed825e8c431c12f7418ac0/invoke.js"></script>
-            </div>
-        </div>
-
-        <!-- 3. FAKE VIDEO PLAYER WITH TMDB BACKDROP/THUMBNAIL -->
-        <div id="player-backdrop" class="aspect-video bg-black rounded-2xl relative overflow-hidden shadow-2xl border border-gray-800 bg-cover bg-center flex items-center justify-center">
-            <div class="absolute inset-0 bg-black/60 backdrop-blur-[2px]"></div>
-            <div class="relative z-10 flex flex-col items-center cursor-pointer" onclick="alertPlaySim()">
-                <div class="w-16 h-16 rounded-full bg-red-600 flex items-center justify-center text-white text-2xl shadow-xl hover:scale-110 transition"><i class="fa-solid fa-play ml-1"></i></div>
-                <span id="preview-ep-label" class="mt-3 text-xs font-bold bg-black/80 px-3 py-1 rounded-full text-white">Show - S1 E1</span>
-            </div>
-        </div>
-
-        <!-- 4. CTA WATCH NOW NO ADS -->
-        <div>
-            <a href="#vip" onclick="alertCTA(event)" class="block w-full bg-red-600 hover:bg-red-700 text-white font-bold text-center py-3.5 rounded-xl shadow-lg shadow-red-900/40 transition">
-                <i class="fa-solid fa-shield-halved mr-2"></i> <span data-i18n="btn_vip">Watch Now No Ads / VIP Access</span>
-            </a>
-        </div>
-
-        <!-- 5. POSTER + SNOPSIS -->
-        <div class="bg-slate-900/50 border border-gray-800 rounded-2xl p-5 flex flex-col sm:flex-row gap-5">
-            <img id="preview-poster" src="" alt="Poster" class="w-32 h-44 object-cover rounded-xl shadow-md shrink-0 mx-auto sm:mx-0 border border-gray-800" onerror="this.src='https://placehold.co/500x750/111827/ffffff?text=No+Image'">
-            <div class="space-y-2.5">
-                <h3 id="preview-player-title" class="font-bold text-base text-red-500">Season 1 Episode 1</h3>
-                <h4 class="text-xs font-semibold text-gray-400 uppercase" data-i18n="synopsis_heading">เรื่องย่อตอน / Tóm tắt</h4>
-                <p id="preview-synopsis" class="text-xs sm:text-sm text-gray-300 leading-relaxed">Synopsis...</p>
-            </div>
-        </div>
-
-        <!-- 6. SEASON NAVIGATION -->
-        <div class="bg-slate-900/50 border border-gray-800 rounded-2xl p-5 space-y-3">
-            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider" id="lbl-season-header" data-i18n="season_header">รายการซีซั่น (Seasons)</h3>
-            <div id="preview-seasons-container" class="flex flex-wrap gap-2"></div>
-        </div>
-
-        <!-- 7. ALL EPISODES NAVIGATION -->
-        <div class="bg-slate-900/50 border border-gray-800 rounded-2xl p-5 space-y-3">
-            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider" id="lbl-episode-header" data-i18n="episode_header">รายการตอนทั้งหมด (All Episodes)</h3>
-            <div id="preview-episodes-container" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-72 overflow-y-auto pr-1"></div>
-        </div>
-
-        <!-- 8. ACTORS -->
-        <div class="bg-slate-900/50 border border-gray-800 rounded-2xl p-5 space-y-3">
-            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider" id="cast-heading" data-i18n="cast_heading">นักแสดงนำ (Cast)</h3>
-            <div id="preview-cast-container" class="grid grid-cols-2 sm:grid-cols-4 gap-3"></div>
-        </div>
-
-    </main>
-
-    <!-- 9. STICKY BANNER FOOTER (Desktop 728x90 and mobile adjusted) -->
-    <footer id="preview-footer-ads" class="hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-950/95 border-t border-gray-800 py-2 px-4 flex justify-center">
-        <div class="w-full max-w-[728px] h-[90px] bg-black/80 rounded-lg overflow-hidden flex items-center justify-center ad-footer-frame">
-            <script>var atOptions_2 = {'key':'2d751854ce36e13fefddaa58f93251e2','format':'iframe','height':90,'width':728,'params':{}};</script>
-            <script src="https://buffcasualwhine.com/2d751854ce36e13fefddaa58f93251e2/invoke.js"></script>
-        </div>
-    </footer>
-
-    <script>
-        const TMDB_API_KEY = "d5a549dec10563dc56696d42f581a771"; // Default sample key, replaceable
-        let currentLanguage = 'th'; // 'th' or 'vi'
-        let currentShowData = null;
-        let selectedSeasonNum = 1;
-        let selectedEpisodeNum = 1;
-        let currentSeasonEpisodes = [];
-        let currentCast = [];
-
-        // Dictionary for multi-language UI labels
-        const i18n = {
-            th: {
-                nav_generator: "เครื่องมือสร้าง (Generator)",
-                nav_preview: "ดูตัวอย่างสด (Live Preview)",
-                ui_brand_title: "สตูดิโอสตรีมมิ่ง",
-                gen_heading: "TMDB Batch URL & Template Generator",
-                gen_subheading: "ป้อน TMDB ID หรือ URL ซีรีส์เพื่อสร้างหน้าสตรีมมิ่งอัตโนมัติพร้อม URL ทุกซีซั่นและทุกตอน รวมถึงแปลภาษาอัตโนมัติ",
-                btn_generate_all: "สร้าง URL ทั้งหมด",
-                ph_title: "ยังไม่ได้โหลดข้อมูลซีรีส์ใดๆ",
-                ph_sub: "ป้อน TMDB ID หรือเลือกตัวอย่างด้านล่างเพื่อเริ่มต้นสร้าง URL",
-                btn_preview_page: "ดูตัวอย่างหน้าสตรีมมิ่ง",
-                txt_season_list_title: "รายการ URL และซีซั่นทั้งหมด",
-                btn_copy_all_urls: "คัดลอก URL ทั้งหมด",
-                txt_ep_desc: "เลือกตอนด้านล่างเพื่อทดสอบหรือสลับหน้าทันที:",
-                export_title: "ส่งออกโค้ด HTML (รวมโฆษณา)",
-                export_desc: "โค้ดเทมเพลตประกอบด้วยโครงสร้าง UI ตามลำดับที่กำหนด",
-                btn_download_html: "ดาวน์โหลด HTML",
-                btn_back: "กลับไปยัง Generator",
-                ad_label: "Sponsored Advertisement (300x250)",
-                btn_vip: "Watch Now No Ads / VIP Access",
-                synopsis_heading: "เรื่องย่อตอน",
-                season_header: "รายการซีซั่น (Seasons)",
-                episode_header: "รายการตอนทั้งหมด (All Episodes)",
-                cast_heading: "นักแสดงนำ (Cast)",
-                alert_play: "กำลังเปิดเครื่องเล่นวิดีโอสตรีมมิ่ง...",
-                alert_vip: "ไปที่ลิงก์ VIP / ไม่มีโฆษณาเรียบร้อยแล้ว",
-                copied: "คัดลอกลิงก์สำเร็จแล้ว!"
-            },
-            vi: {
-                nav_generator: "Công cụ tạo (Generator)",
-                nav_preview: "Xem trước (Live Preview)",
-                ui_brand_title: "Studio Phát Trực Tuyến",
-                gen_heading: "Trình tạo URL & Mẫu TMDB Hàng Loạt",
-                gen_subheading: "Nhập ID TMDB hoặc URL để tạo trang phát trực tuyến tự động với tất cả URL các mùa và tập phim, kèm dịch tự động",
-                btn_generate_all: "Tạo Tất Cả URL",
-                ph_title: "Chưa có dữ liệu phim nào được tải",
-                ph_sub: "Nhập ID TMDB hoặc chọn phim mẫu bên dưới để bắt đầu",
-                btn_preview_page: "Xem trước trang phát trực tuyến",
-                txt_season_list_title: "Danh sách URL & Các mùa phim",
-                btn_copy_all_urls: "Sao chép tất cả URL",
-                txt_ep_desc: "Chọn tập bên dưới để kiểm tra hoặc chuyển đổi trang ngay:",
-                export_title: "Xuất mã HTML (Có quảng cáo)",
-                export_desc: "Mã mẫu bao gồm cấu trúc giao diện theo đúng thứ tự yêu cầu",
-                btn_download_html: "Tải xuống HTML",
-                btn_back: "Quay lại Generator",
-                ad_label: "Quảng cáo tài trợ (300x250)",
-                btn_vip: "Watch Now No Ads / Truy cập VIP",
-                synopsis_heading: "Tóm tắt tập phim",
-                season_header: "Danh sách mùa (Seasons)",
-                episode_header: "Danh sách tất cả các tập (All Episodes)",
-                cast_heading: "Diễn viên chính (Cast)",
-                alert_play: "Đang mở trình phát video...",
-                alert_vip: "Đã chuyển đến liên kết VIP thành công!",
-                copied: "Đã sao chép liên kết thành công!"
-            }
-        };
-
-        function changeLanguage() {
-            const select = document.getElementById('lang-select');
-            currentLanguage = select.value;
-            const htmlRoot = document.getElementById('html-root');
-            htmlRoot.setAttribute('lang', currentLanguage);
-
-            // Apply translations to data-i18n elements
-            document.querySelectorAll('[data-i18n]').forEach(el => {
-                const key = el.getAttribute('data-i18n');
-                if (i18n[currentLanguage][key]) {
-                    el.innerText = i18n[currentLanguage][key];
-                }
-            });
-
-            // Re-render dynamic elements with translation if data exists
-            if (currentShowData) {
-                renderShowDetails();
-            }
-        }
-
-        function switchView(viewName) {
-            const genView = document.getElementById('view-generator');
-            const prevView = document.getElementById('view-preview');
-            const footerAds = document.getElementById('preview-footer-ads');
-            const genBtn = document.getElementById('nav-gen-btn');
-            const prevBtn = document.getElementById('nav-prev-btn');
-
-            if (viewName === 'generator') {
-                genView.classList.remove('hidden');
-                prevView.classList.add('hidden');
-                footerAds.classList.add('hidden'); // Ads only on preview / generated pages
-                genBtn.className = "text-xs sm:text-sm font-medium px-3 py-1.5 rounded-md bg-red-600 text-white transition";
-                prevBtn.className = "text-xs sm:text-sm font-medium px-3 py-1.5 rounded-md text-gray-300 hover:text-white transition";
-            } else {
-                genView.classList.add('hidden');
-                prevView.classList.remove('hidden');
-                footerAds.classList.remove('hidden'); // Ads shown on preview / generated page
-                prevBtn.className = "text-xs sm:text-sm font-medium px-3 py-1.5 rounded-md bg-red-600 text-white transition";
-                genBtn.className = "text-xs sm:text-sm font-medium px-3 py-1.5 rounded-md text-gray-300 hover:text-white transition";
-            }
-        }
-
-        async function fetchTMDBData() {
-            const inputVal = document.getElementById('tmdb-input').value.trim();
-            let showId = inputVal;
-
-            if (inputVal.includes('themoviedb.org')) {
-                const match = inputVal.match(/\/tv\/(\d+)/);
-                if (match && match[1]) showId = match[1];
-            }
-
-            if (!showId || isNaN(showId)) {
-                showError("Mohon masukkan TMDB ID atau URL series yang valid (Contoh: 1396)");
-                return;
-            }
-
-            hideError();
-            const tmdbLang = currentLanguage === 'th' ? 'th-TH' : 'vi-VN';
-            const url = `https://api.themoviedb.org/3/tv/${showId}?api_key=${TMDB_API_KEY}&language=${tmdbLang}&append_to_response=credits`;
-
-            try {
-                const res = await fetch(url);
-                if (!res.ok) throw new Error("Gagal mengambil data dari TMDB. Periksa ID atau API Key Anda.");
-                const data = await res.json();
-                
-                // Fallback to English if Thai/Vietnamese overview is missing
-                if (!data.overview && currentLanguage === 'th') {
-                    const resEn = await fetch(`https://api.themoviedb.org/3/tv/${showId}?api_key=${TMDB_API_KEY}&language=en-US&append_to_response=credits`);
-                    const dataEn = await resEn.json();
-                    data.overview = dataEn.overview + " (Auto-Translated)";
-                }
-
-                currentShowData = data;
-                selectedSeasonNum = data.seasons && data.seasons.length > 0 ? (data.seasons[0].season_number === 0 && data.seasons.length > 1 ? data.seasons[1].season_number : data.seasons[0].season_number) : 1;
-                selectedEpisodeNum = 1;
-                currentCast = data.credits && data.credits.cast ? data.credits.cast : [];
-
-                await loadSeasonEpisodes(showId, selectedSeasonNum);
-                renderShowDetails();
-                document.getElementById('generator-placeholder').classList.add('hidden');
-                document.getElementById('generator-results').classList.remove('hidden');
-                generateExportCode();
-
-            } catch (err) {
-                showError(err.message);
-            }
-        }
-
-        async function loadSampleShow(id) {
-            document.getElementById('tmdb-input').value = id;
-            await fetchTMDBData();
-        }
-
-        async function loadSeasonEpisodes(showId, seasonNum) {
-            selectedSeasonNum = seasonNum;
-            const tmdbLang = currentLanguage === 'th' ? 'th-TH' : 'vi-VN';
-            const url = `https://api.themoviedb.org/3/tv/${showId}/season/${seasonNum}?api_key=${TMDB_API_KEY}&language=${tmdbLang}`;
-            
-            try {
-                const res = await fetch(url);
-                const data = await res.json();
-                currentSeasonEpisodes = data.episodes || [];
-            } catch(e) {
-                currentSeasonEpisodes = [];
-            }
-            renderEpisodesUI();
-        }
-
-        function renderShowDetails() {
-            if (!currentShowData) return;
-
-            // Generator View Details
-            document.getElementById('show-poster').src = currentShowData.poster_path ? `https://image.tmdb.org/t/p/w500${currentShowData.poster_path}` : 'https://placehold.co/500x750/111827/ffffff?text=No+Image';
-            document.getElementById('show-title').innerText = currentShowData.name || currentShowData.original_name;
-            const year = currentShowData.first_air_date ? currentShowData.first_air_date.split('-')[0] : '2023';
-            const rating = currentShowData.vote_average ? currentShowData.vote_average.toFixed(1) : '8.0';
-            document.getElementById('show-meta').innerText = `${year} • ⭐ ${rating}`;
-            document.getElementById('show-status').innerText = currentShowData.status || 'Ongoing';
-            document.getElementById('show-synopsis').innerText = currentShowData.overview || 'Sinopsis tidak tersedia.';
-
-            // Preview View Details (Strict Order)
-            document.getElementById('preview-show-title').innerText = currentShowData.name || currentShowData.original_name;
-            document.getElementById('preview-meta').innerText = `${year} • ⭐ ${rating}`;
-            document.getElementById('preview-poster').src = currentShowData.poster_path ? `https://image.tmdb.org/t/p/w500${currentShowData.poster_path}` : 'https://placehold.co/500x750/111827/ffffff?text=No+Image';
-            
-            const backdrop = currentShowData.backdrop_path ? `https://image.tmdb.org/t/p/original${currentShowData.backdrop_path}` : (currentShowData.poster_path ? `https://image.tmdb.org/t/p/original${currentShowData.poster_path}` : '');
-            if(backdrop) {
-                document.getElementById('player-backdrop').style.backgroundImage = `url('${backdrop}')`;
-            }
-
-            document.getElementById('preview-ep-label').innerText = `${currentShowData.name} - S${selectedSeasonNum} E${selectedEpisodeNum}`;
-            document.getElementById('preview-player-title').innerText = `Season ${selectedSeasonNum} Episode ${selectedEpisodeNum}`;
-            
-            // Find episode synopsis if available
-            let epOverview = currentShowData.overview;
-            const foundEp = currentSeasonEpisodes.find(e => e.episode_number === selectedEpisodeNum);
-            if(foundEp && foundEp.overview) {
-                epOverview = foundEp.overview;
-            }
-            document.getElementById('preview-synopsis').innerText = epOverview || 'Sinopsis episode...';
-
-            // SEO Adaptation per URL and Season/Episode
-            const seoTitle = `${currentShowData.name} - S${selectedSeasonNum} E${selectedEpisodeNum} Streaming`;
-            document.getElementById('page-seo-title').innerText = seoTitle;
-            document.getElementById('page-seo-desc').content = `${currentShowData.name} Season ${selectedSeasonNum} Episode ${selectedEpisodeNum} - Watch online with zero ads.`;
-
-            // Render Seasons Tabs
-            renderSeasonsUI();
-            // Render Episodes
-            renderEpisodesUI();
-            // Render Cast
-            renderCastUI();
-            // Update Selected URL box
-            updateUrlBox();
-        }
-
-        function renderSeasonsUI() {
-            if (!currentShowData || !currentShowData.seasons) return;
-            const containerGen = document.getElementById('gen-season-tabs');
-            const containerPrev = document.getElementById('preview-seasons-container');
-            
-            let htmlGen = '';
-            let htmlPrev = '';
-
-            currentShowData.seasons.forEach(s => {
-                if(s.season_number === 0) return; // Skip specials if desired
-                const activeClass = s.season_number === selectedSeasonNum ? 'bg-red-600 text-white font-bold' : 'bg-slate-800 text-gray-300 hover:bg-slate-700';
-                
-                htmlGen += `<button onclick="selectSeason(${s.season_number})" class="px-3 py-1.5 rounded-xl text-xs transition border border-gray-700 ${activeClass}">Season ${s.season_number}</button>`;
-                htmlPrev += `<button onclick="selectSeason(${s.season_number})" class="px-3 py-1.5 rounded-xl text-xs transition border border-gray-700 ${activeClass}">Season ${s.season_number}</button>`;
-            });
-
-            containerGen.innerHTML = htmlGen;
-            containerPrev.innerHTML = htmlPrev;
-        }
-
-        async function selectSeason(sNum) {
-            selectedSeasonNum = sNum;
-            selectedEpisodeNum = 1;
-            await loadSeasonEpisodes(currentShowData.id, sNum);
-            renderShowDetails();
-            generateExportCode();
-        }
-
-        function renderEpisodesUI() {
-            const containerGen = document.getElementById('episodes-container');
-            const containerPrev = document.getElementById('preview-episodes-container');
-
-            if (!currentSeasonEpisodes || currentSeasonEpisodes.length === 0) {
-                containerGen.innerHTML = '<div class="text-xs text-gray-500">Memuat episode...</div>';
-                containerPrev.innerHTML = '<div class="text-xs text-gray-500">Memuat episode...</div>';
-                return;
-            }
-
-            let html = '';
-            currentSeasonEpisodes.forEach(ep => {
-                const activeClass = ep.episode_number === selectedEpisodeNum ? 'border-red-600 bg-red-950/30 text-white' : 'border-gray-800 bg-black/40 text-gray-300 hover:border-gray-600';
-                html += `
-                    <div onclick="selectEpisode(${ep.episode_number})" class="p-2.5 rounded-xl border ${activeClass} cursor-pointer transition flex items-center justify-between">
-                        <div class="truncate">
-                            <span class="font-bold text-xs text-red-400 mr-2">E${ep.episode_number}</span>
-                            <span class="text-xs font-medium">${ep.name || 'Episode ' + ep.episode_number}</span>
-                        </div>
-                        <i class="fa-solid fa-play text-[10px] text-gray-500 ml-2"></i>
-                    </div>
-                `;
-            });
-
-            containerGen.innerHTML = html;
-            containerPrev.innerHTML = html;
-            updateUrlBox();
-        }
-
-        function selectEpisode(eNum) {
-            selectedEpisodeNum = eNum;
-            renderShowDetails();
-            generateExportCode();
-        }
-
-        function renderCastUI() {
-            const container = document.getElementById('preview-cast-container');
-            if (!currentCast || currentCast.length === 0) {
-                container.innerHTML = '<div class="text-xs text-gray-500 col-span-4">Tidak ada data aktor.</div>';
-                return;
-            }
-
-            let html = '';
-            currentCast.slice(0, 8).forEach(actor => {
-                const img = actor.profile_path ? `https://image.tmdb.org/t/p/w185${actor.profile_path}` : 'https://placehold.co/185x278/111827/ffffff?text=No+Photo';
-                html += `
-                    <div class="bg-slate-900 border border-gray-800 p-2.5 rounded-xl text-center space-y-1.5">
-                        <img src="${img}" class="w-full h-28 object-cover rounded-lg" onerror="this.src='https://placehold.co/185x278/111827/ffffff?text=No+Photo'">
-                        <h5 class="font-bold text-xs text-white truncate">${actor.name}</h5>
-                        <p class="text-[10px] text-gray-400 truncate">${actor.character || '-'}</p>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-        }
-
-        function updateUrlBox() {
-            if (!currentShowData) return;
-            const currentUrl = `${window.location.origin}${window.location.pathname}?id=${currentShowData.id}&s=${selectedSeasonNum}&e=${selectedEpisodeNum}`;
-            document.getElementById('current-selected-url').innerText = `URL: ${currentUrl}`;
-        }
-
-        function copyAllGeneratedUrls() {
-            if (!currentShowData) return;
-            let allUrls = [];
-            // In a batch generation simulation, create URLs for all seasons and episodes
-            currentShowData.seasons.forEach(s => {
-                if(s.season_number === 0) return;
-                // Generate simulated list
-                for(let i=1; i<=(s.episode_count || 10); i++) {
-                    allUrls.push(`${window.location.origin}${window.location.pathname}?id=${currentShowData.id}&s=${s.season_number}&e=${i}`);
-                }
-            });
-
-            const textToCopy = allUrls.join('\n');
-            const textarea = document.createElement('textarea');
-            textarea.value = textToCopy;
-            document.body.appendChild(textarea);
-            textarea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textarea);
-            alert(i18n[currentLanguage].copied);
-        }
-
-        function alertPlaySim() {
-            alert(i18n[currentLanguage].alert_play);
-        }
-
-        function alertCTA(e) {
-            e.preventDefault();
-            alert(i18n[currentLanguage].alert_vip);
-        }
-
-        function showError(msg) {
-            const box = document.getElementById('error-box');
-            box.innerText = msg;
-            box.classList.remove('hidden');
-        }
-
-        function hideError() {
-            const box = document.getElementById('error-box');
-            box.classList.add('hidden');
-        }
-
-        function generateExportCode() {
-            if (!currentShowData) return;
-            const showId = currentShowData.id;
-            const backdropPath = currentShowData.backdrop_path ? `https://image.tmdb.org/t/p/original${currentShowData.backdrop_path}` : (currentShowData.poster_path ? `https://image.tmdb.org/t/p/original${currentShowData.poster_path}` : '');
-            
-            const templateCode = `<!DOCTYPE html>
-<html lang="${currentLanguage}" class="dark">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${currentShowData.name} - Season ${selectedSeasonNum} Episode ${selectedEpisodeNum} Streaming</title>
+    <title>โคตรรัก - Season 1 Episode 1</title>
+    <meta name="description" content="โคตรรัก Season 1 Episode 1 stream online.">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -609,73 +14,82 @@
         }
     </style>
 </head>
-<body class="bg-slate-950 text-white min-h-screen p-4 sm:p-8 space-y-6 pb-24">
+<body class="bg-slate-950 text-white min-h-screen p-4 sm:p-6 space-y-6 pb-28">
     <div class="max-w-4xl mx-auto space-y-6">
+        
         <!-- 1. TITLE -->
         <div class="bg-slate-900 border border-gray-800 p-5 rounded-2xl">
-            <h1 class="text-2xl font-black">${currentShowData.name}</h1>
-            <p class="text-xs text-gray-400 mt-1">Season ${selectedSeasonNum} Episode ${selectedEpisodeNum} (TMDB ID: ${showId})</p>
+            <h1 class="text-2xl sm:text-3xl font-black">โคตรรัก</h1>
+            <p class="text-xs text-gray-400 mt-1">TMDB ID: 335052 • Season 1 Episode 1</p>
         </div>
 
-        <!-- 2. ADS BANNER 300x250 -->
-        <div class="flex justify-center my-4">
-            <div class="w-[300px] h-[250px] bg-slate-900 border border-gray-800 flex items-center justify-center rounded-lg overflow-hidden">
+        <!-- 2. ADS BANNER (300x250) -->
+        <div class="my-4 flex flex-col items-center justify-center p-3 bg-slate-900/50 border border-gray-800 rounded-2xl">
+            <span class="text-[10px] text-gray-500 uppercase tracking-wider mb-2">Sponsored Advertisement (300x250)</span>
+            <div class="w-[300px] h-[250px] bg-slate-900 flex items-center justify-center rounded-lg overflow-hidden border border-gray-800">
                 <script>var atOptions_1 = {'key':'53541ca00eed825e8c431c12f7418ac0','format':'iframe','height':250,'width':300,'params':{}};</script>
                 <script src="https://buffcasualwhine.com/53541ca00eed825e8c431c12f7418ac0/invoke.js"></script>
             </div>
         </div>
 
         <!-- 3. FAKE VIDEO PLAYER WITH TMDB THUMBNAIL -->
-        <div class="aspect-video bg-black rounded-2xl relative overflow-hidden shadow-2xl border border-gray-800 bg-cover bg-center flex items-center justify-center" style="background-image: url('${backdropPath}');">
+        <div class="aspect-video bg-black rounded-2xl relative overflow-hidden shadow-2xl border border-gray-800 bg-cover bg-center flex items-center justify-center" style="background-image: url('https://image.tmdb.org/t/p/original/8EPepJRIu8TuggJ7Sr8tCh6Itgh.jpg');">
             <div class="absolute inset-0 bg-black/60 backdrop-blur-[2px]"></div>
-            <div class="relative z-10 flex flex-col items-center cursor-pointer" onclick="alert('${currentLanguage === 'th' ? 'กำลังเปิดเครื่องเล่นวิดีโอ...' : 'Đang mở trình phát video...'}')">
+            <div class="relative z-10 flex flex-col items-center cursor-pointer" onclick="alert('กำลังเปิดเครื่องเล่นวิดีโอ...')">
                 <div class="w-16 h-16 rounded-full bg-red-600 flex items-center justify-center text-white text-2xl shadow-xl hover:scale-110 transition"><i class="fa-solid fa-play ml-1"></i></div>
-                <span class="mt-3 text-xs font-bold bg-black/80 px-3 py-1 rounded-full text-white">${currentShowData.name} - S${selectedSeasonNum} E${selectedEpisodeNum}</span>
+                <span class="mt-3 text-xs font-bold bg-black/80 px-3 py-1 rounded-full text-white">โคตรรัก - S1 E1</span>
             </div>
         </div>
 
         <!-- 4. CTA WATCH NOW NO ADS -->
-        <a href="#vip" onclick="event.preventDefault(); alert('${currentLanguage === 'th' ? 'ไปที่ลิงก์ VIP / ไม่มีโฆษณาเรียบร้อยแล้ว' : 'Đã chuyển đến liên kết VIP / Không quảng cáo thành công'}');" class="block w-full bg-red-600 hover:bg-red-700 text-white font-bold text-center py-3.5 rounded-xl shadow-lg transition">
-            <i class="fa-solid fa-shield-halved mr-2"></i> Watch Now No Ads / VIP Access
-        </a>
+        <div>
+            <a href="#vip" onclick="event.preventDefault(); alert('ไปที่ลิงก์ VIP / ไม่มีโฆษณาเรียบร้อยแล้ว');" class="block w-full bg-red-600 hover:bg-red-700 text-white font-bold text-center py-3.5 rounded-xl shadow-lg transition">
+                <i class="fa-solid fa-shield-halved mr-2"></i> Watch Now No Ads / VIP Access
+            </a>
+        </div>
 
-        <!-- 5. POSTER + SINOPSIS -->
+        <!-- 5. POSTER + SYNOPSIS -->
         <div class="bg-slate-900 border border-gray-800 p-5 rounded-2xl flex flex-col sm:flex-row gap-5">
-            <img src="https://image.tmdb.org/t/p/w500${currentShowData.poster_path}" class="w-32 h-44 object-cover rounded-xl shrink-0 mx-auto sm:mx-0">
+            <img src="https://image.tmdb.org/t/p/w500/8voRdRs8vTdluMb372F6gKyyCR6.jpg" class="w-32 h-44 object-cover rounded-xl shrink-0 mx-auto sm:mx-0 border border-gray-800">
             <div class="space-y-2">
-                <h3 class="font-bold text-red-500">Season ${selectedSeasonNum} Episode ${selectedEpisodeNum}</h3>
-                <h4 class="text-xs font-semibold text-gray-400 uppercase">Synopsis</h4>
-                <p class="text-xs sm:text-sm text-gray-300 leading-relaxed">${currentShowData.overview || ''}</p>
+                <h3 class="font-bold text-base text-red-500">Season 1 Episode 1</h3>
+                <h4 class="text-xs font-semibold text-gray-400 uppercase">Sinopsis / Tóm tắt</h4>
+                <p class="text-xs sm:text-sm text-gray-300 leading-relaxed">Krit, a data analytics CEO pressured by a scandal and his mother, enters a fake marriage with his adopted brother Nont. As Nont attracts others, Krit's hidden feelings emerge, forcing him to choose between his family empire and love. (Auto-Translated)</p>
             </div>
         </div>
+
+        <!-- 6. SEASON NAVIGATION -->
+        <div class="bg-slate-900 border border-gray-800 p-5 rounded-2xl space-y-3">
+            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Seasons</h3>
+            <div class="flex flex-wrap gap-2">
+                <span class="px-3 py-1.5 rounded-xl text-xs bg-slate-800 text-gray-300 border border-gray-700">Season 1</span>
+            </div>
+        </div>
+
+        <!-- 7. ALL EPISODES NAVIGATION -->
+        <div class="bg-slate-900 border border-gray-800 p-5 rounded-2xl space-y-3">
+            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">All Episodes</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-72 overflow-y-auto pr-1">
+                <div class="p-2.5 rounded-xl border border-gray-800 bg-black/40 text-gray-300 flex items-center justify-between"><span class="font-bold text-xs text-red-400 mr-2">E1</span><span class="text-xs truncate">Episode 1</span></div><div class="p-2.5 rounded-xl border border-gray-800 bg-black/40 text-gray-300 flex items-center justify-between"><span class="font-bold text-xs text-red-400 mr-2">E2</span><span class="text-xs truncate">Episode 2</span></div><div class="p-2.5 rounded-xl border border-gray-800 bg-black/40 text-gray-300 flex items-center justify-between"><span class="font-bold text-xs text-red-400 mr-2">E3</span><span class="text-xs truncate">Episode 3</span></div><div class="p-2.5 rounded-xl border border-gray-800 bg-black/40 text-gray-300 flex items-center justify-between"><span class="font-bold text-xs text-red-400 mr-2">E4</span><span class="text-xs truncate">Episode 4</span></div><div class="p-2.5 rounded-xl border border-gray-800 bg-black/40 text-gray-300 flex items-center justify-between"><span class="font-bold text-xs text-red-400 mr-2">E5</span><span class="text-xs truncate">Episode 5</span></div><div class="p-2.5 rounded-xl border border-gray-800 bg-black/40 text-gray-300 flex items-center justify-between"><span class="font-bold text-xs text-red-400 mr-2">E6</span><span class="text-xs truncate">Episode 6</span></div><div class="p-2.5 rounded-xl border border-gray-800 bg-black/40 text-gray-300 flex items-center justify-between"><span class="font-bold text-xs text-red-400 mr-2">E7</span><span class="text-xs truncate">Episode 7</span></div><div class="p-2.5 rounded-xl border border-gray-800 bg-black/40 text-gray-300 flex items-center justify-between"><span class="font-bold text-xs text-red-400 mr-2">E8</span><span class="text-xs truncate">Episode 8</span></div>
+            </div>
+        </div>
+
+        <!-- 8. ACTORS -->
+        <div class="bg-slate-900 border border-gray-800 p-5 rounded-2xl space-y-3">
+            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Cast / Aktor</h3>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div class="bg-slate-950 border border-gray-800 p-2.5 rounded-xl text-center space-y-1"><img src="https://image.tmdb.org/t/p/w185/tr7Lmmqp1iRKlSaoJCyec0OZ1sf.jpg" class="w-full h-24 object-cover rounded-lg"><h5 class="font-bold text-xs text-white truncate">พีระกฤตย์ พชรบุณยเกียรติ</h5><p class="text-[10px] text-gray-400 truncate">Nont</p></div><div class="bg-slate-950 border border-gray-800 p-2.5 rounded-xl text-center space-y-1"><img src="https://image.tmdb.org/t/p/w185/oeZlF52s9fAiL3aopGGbHTbeRTZ.jpg" class="w-full h-24 object-cover rounded-lg"><h5 class="font-bold text-xs text-white truncate">ทาฆิ อ่องลออ</h5><p class="text-[10px] text-gray-400 truncate">Krit</p></div>
+            </div>
+        </div>
+
     </div>
 
-    <!-- 9. STICKY FOOTER BANNER 728x90 (Mobile & Desktop adapted) -->
+    <!-- 9. STICKY BANNER FOOTER (Responsive 728x90 desktop / scaled mobile) -->
     <footer class="fixed bottom-0 left-0 right-0 z-50 bg-slate-950/95 border-t border-gray-800 py-2 px-4 flex justify-center">
         <div class="w-full max-w-[728px] h-[90px] bg-black/80 rounded-lg overflow-hidden flex items-center justify-center ad-footer-frame">
             <script>var atOptions_2 = {'key':'2d751854ce36e13fefddaa58f93251e2','format':'iframe','height':90,'width':728,'params':{}};</script>
             <script src="https://buffcasualwhine.com/2d751854ce36e13fefddaa58f93251e2/invoke.js"></script>
         </div>
     </footer>
-</body>
-</html>`;
-
-            const textarea = document.getElementById('exported-code-preview');
-            if(textarea) textarea.value = templateCode;
-        }
-
-        function exportTemplateCode() {
-            if (!currentShowData) return;
-            generateExportCode();
-            const code = document.getElementById('exported-code-preview').value;
-            const blob = new Blob([code], { type: 'text/html;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${currentShowData.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}-s${selectedSeasonNum}e${selectedEpisodeNum}.html`;
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-    </script>
 </body>
 </html>
